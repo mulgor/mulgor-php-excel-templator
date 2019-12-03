@@ -1,12 +1,12 @@
 {
-    "name": "alhimik1986/php-excel-templator",
-    "description": "PHP Spreadsheet extension for generating excel files from template",
+    "name": "mulgor/mulgor-php-excel-templator",
+    "description": "PHP Spreadsheet extension for generating excel files from template,forked from alhimik1986/php-excel-templator, and add new future",
     "keywords": ["php", "excel", "template", "templator", "templater"],
     "license": "MIT",
     "authors": [
         {
-            "name": "Sidorovich Nikolay",
-            "email": "sidorovich21101986@mail.ru"
+            "name": "Mulgor",
+            "email": "business@mulgor.cn"
         }
     ],
     "minimum-stability": "dev",
