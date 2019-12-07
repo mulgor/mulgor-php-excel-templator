@@ -15,6 +15,8 @@ use alhimik1986\PhpExcelTemplator\params\ExcelParam;
 use alhimik1986\PhpExcelTemplator\params\SetterParam;
 use PhpOffice\PhpSpreadsheet\Writer\IWriter;
 
+use PhpOffice\PhpSpreadsheet\Writer\Pdf;
+
 class PhpExcelTemplator
 {
     const BEFORE_INSERT_PARAMS = 'BeforeInsertParams';
@@ -30,13 +32,13 @@ class PhpExcelTemplator
      * @param callable[] $events События
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      */
-	public static function outputToFile($templateFile, $fileName, $params, $callbacks=[], $events=[])
+	public static function outputToFile($templateFile, $fileName, $params, $callbacks=[], $events=[],$ispdf = false)
 	{
 		$spreadsheet = static::getSpreadsheet($templateFile);
 		$sheet = $spreadsheet->getActiveSheet();
 		$templateVarsArr = $sheet->toArray();
 		static::renderWorksheet($sheet, $templateVarsArr, $params, $callbacks, $events);
-		static::outputSpreadsheetToFile($spreadsheet, $fileName, $events);
+		static::outputSpreadsheetToFile($spreadsheet, $fileName, $events, $ispdf);
 	}
 
     /**
@@ -48,13 +50,13 @@ class PhpExcelTemplator
      * @param callable[] $events События
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      */
-	public static function saveToFile($templateFile, $fileName, $params, $callbacks=[], $events=[])
+	public static function saveToFile($templateFile, $fileName, $params, $callbacks=[], $events=[], $ispdf = false)
 	{
         $spreadsheet = static::getSpreadsheet($templateFile);
 		$sheet = $spreadsheet->getActiveSheet();
 		$templateVarsArr = $sheet->toArray();
 		static::renderWorksheet($sheet, $templateVarsArr, $params, $callbacks, $events);
-		static::saveSpreadsheetToFile($spreadsheet, $fileName, $events);
+		static::saveSpreadsheetToFile($spreadsheet, $fileName, $events, $ispdf);
 	}
 
     /**
@@ -133,17 +135,26 @@ class PhpExcelTemplator
      * @param callable[] $events События
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
      */
-	public static function outputSpreadsheetToFile(Spreadsheet $spreadsheet, $fileName, $events=[])
+	public static function outputSpreadsheetToFile(Spreadsheet $spreadsheet, $fileName, $events=[], $ispdf = false)
 	{
-        $writer = static::getWriter($spreadsheet);
+		$writer = static::getWriter($spreadsheet, $ispdf);
 		Calculation::getInstance($spreadsheet)->clearCalculationCache();
-		self::setHeaders(basename($fileName));
+		self::setHeaders(basename($fileName), $ispdf);
 
         if (isset($events[self::BEFORE_SAVE]) AND is_callable($events[self::BEFORE_SAVE])) {
             $events[self::BEFORE_SAVE]($spreadsheet, $writer);
-        }
-
+		}
+		
+	// 	if ($ispdf) {
+	// 		// $spreadsheet->getActiveSheet()->setShowGridlines(false);
+	// 		// $writer->setPaperSize('A4');
+			
+	// 		$spreadsheet->getActiveSheet()->getPageSetup()
+    // ->setPaperSize(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4);
+	// 	}
+		
 		$writer->save('php://output');
+		
 	}
 
     /**
@@ -153,9 +164,9 @@ class PhpExcelTemplator
      * @param callable[] $events События
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
      */
-	public static function saveSpreadsheetToFile(Spreadsheet $spreadsheet, $fileName, $events=[])
+	public static function saveSpreadsheetToFile(Spreadsheet $spreadsheet, $fileName, $events=[], $ispdf = false)
 	{
-		$writer = static::getWriter($spreadsheet);
+		$writer = static::getWriter($spreadsheet, $ispdf);
 		Calculation::getInstance($spreadsheet)->clearCalculationCache();
 
         if (isset($events['beforeSave']) AND is_callable($events['beforeSave'])) {
@@ -170,19 +181,28 @@ class PhpExcelTemplator
      * @return IWriter
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
      */
-	protected static function getWriter(Spreadsheet $spreadsheet)
+	protected static function getWriter(Spreadsheet $spreadsheet, $ispdf = false)
     {
-        return IOFactory::createWriter($spreadsheet, 'Xlsx');
+		if ($ispdf) {
+			return new MpdfWriter($spreadsheet);
+		} else {
+			return IOFactory::createWriter($spreadsheet, 'Xlsx');
+		}
     }
 
 	/**
 	 * Устанавливаю параметры header, необходимые для скачивания excel-файла.
 	 * @param string $fileName - Имя файла 
 	 */
-	protected static function setHeaders($fileName)
+	protected static function setHeaders($fileName, $ispdf = false)
 	{
 		header('Content-Disposition: attachment; filename="'.$fileName);
-		header('Content-type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+		if ($ispdf) {
+			header('Content-type: application/pdf');
+		} else {
+			header('Content-type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+		}
+		
 		header('Content-Type: text/html; charset=windows-1251;');
 		header('Pragma: public');
 
