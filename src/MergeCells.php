@@ -100,16 +100,6 @@ class MergeCells
                     // Clear cell, which must contain just an image
                     $sheet->getCell($coordinate)->setValue(null);
                 }
-                
-                // $rowHeight = $drawing->getHeight();
-                // $rowHeight = $rowHeight/$subCounts;
-                //     // 计算行高，如果太小则不改变，避免挤压
-                //     if($rowHeight > 20) {
-                //         for($i = $startRow; $i < $curRow; $i++) {
-                //             $sheet->getRowDimension($i)->setRowHeight($rowHeight);
-                //         }
-                //     }
-                
             }
         }
         
@@ -119,6 +109,11 @@ class MergeCells
         if ($mergeRange) {
             $rowNumber = count($sheet->rangeToArray($mergeRange));
             $rowHeight = $minHeight/$rowNumber;
+
+            // 如果行高太小则固定20，避免挤压
+            if($rowHeight < 20) {
+                $rowHeight = 20;
+            }
             for ($i = 0; $i < $rowNumber; $i++) {
                 $sheet->getRowDimension($rowIndex - $i)->setRowHeight($rowHeight);
             }

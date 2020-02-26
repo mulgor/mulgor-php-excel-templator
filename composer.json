@@ -17,6 +17,6 @@
     },
     "require": {
     	"php": ">=5.6.0",
-        "mulgor/phpspreadsheet": "dev-master"
+        "mulgor/phpspreadsheet": "^1.11.0"
     }
 }
